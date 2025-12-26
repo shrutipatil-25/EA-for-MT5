@@ -1,0 +1,30 @@
+//+------------------------------------------------------------------+
+//| Function to open a Sell order                                    |
+//+------------------------------------------------------------------+
+void OpenSellOrder(double lotSize, double stopLossPips, double takeProfitPips)
+{
+    double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);  // Current Bid price
+    double sl = bid + stopLossPips * _Point;             // Stop Loss level
+    double tp = bid - takeProfitPips * _Point;           // Take Profit level
+
+    MqlTradeRequest request;
+    MqlTradeResult  result;
+    ZeroMemory(request);
+    ZeroMemory(result);
+
+    request.action   = TRADE_ACTION_DEAL;     // Immediate order execution
+    request.symbol   = _Symbol;
+    request.volume   = lotSize;
+    request.type     = ORDER_TYPE_SELL;
+    request.price    = bid;
+    request.sl       = sl;
+    request.tp       = tp;
+    request.deviation= 10;                    // Max slippage in points
+    request.magic    = 123456;                // Unique EA identifier
+    request.comment  = "Sell Order EA";
+
+    if(!OrderSend(request, result))
+        Print("Sell Order failed: ", GetLastError());
+    else
+        Print("Sell Order placed successfully. Ticket: ", result.order);
+}
