@@ -1,0 +1,7 @@
+if(buyCondition) {
+    OpenBuyOrder(0.1, 50, 100);  // Lot 0.1, SL 50 pips, TP 100 pips
+}
+
+if(sellCondition) {
+    OpenSellOrder(0.1, 50, 100); // Lot 0.1, SL 50 pips, TP 100 pips
+}
