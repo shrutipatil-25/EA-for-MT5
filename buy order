@@ -1,0 +1,30 @@
+//+------------------------------------------------------------------+
+//| Function to open a Buy order                                     |
+//+------------------------------------------------------------------+
+void OpenBuyOrder(double lotSize, double stopLossPips, double takeProfitPips)
+{
+    double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);  // Current Ask price
+    double sl = ask - stopLossPips * _Point;             // Stop Loss level
+    double tp = ask + takeProfitPips * _Point;           // Take Profit level
+
+    MqlTradeRequest request;
+    MqlTradeResult  result;
+    ZeroMemory(request);
+    ZeroMemory(result);
+
+    request.action   = TRADE_ACTION_DEAL;     // Immediate order execution
+    request.symbol   = _Symbol;
+    request.volume   = lotSize;
+    request.type     = ORDER_TYPE_BUY;
+    request.price    = ask;
+    request.sl       = sl;
+    request.tp       = tp;
+    request.deviation= 10;                    // Max slippage in points
+    request.magic    = 123456;                // Unique EA identifier
+    request.comment  = "Buy Order EA";
+
+    if(!OrderSend(request, result))
+        Print("Buy Order failed: ", GetLastError());
+    else
+        Print("Buy Order placed successfully. Ticket: ", result.order);
+}
