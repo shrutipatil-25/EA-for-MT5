@@ -1,0 +1,138 @@
+//+------------------------------------------------------------------+
+//|                                               SimpleBuySellEA.mq5 |
+//|                        Auto-generated for MT5                    |
+//+------------------------------------------------------------------+
+#property strict
+
+input double LotSize       = 0.1;   // Lot size
+input double StopLossPips  = 50;    // Stop Loss in pips
+input double TakeProfitPips= 100;   // Take Profit in pips
+input int    FastMA        = 50;    // Fast Moving Average period
+input int    SlowMA        = 200;   // Slow Moving Average period
+input int    MagicNumber   = 123456;
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+   Print("Simple Buy/Sell EA initialized.");
+   return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+   Print("Simple Buy/Sell EA removed.");
+}
+
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+   // Get moving averages
+   double maFast = iMA(_Symbol, _Period, FastMA, 0, MODE_EMA, PRICE_CLOSE, 0);
+   double maSlow = iMA(_Symbol, _Period, SlowMA, 0, MODE_EMA, PRICE_CLOSE, 0);
+
+   // Get previous MA values
+   double maFastPrev = iMA(_Symbol, _Period, FastMA, 0, MODE_EMA, PRICE_CLOSE, 1);
+   double maSlowPrev = iMA(_Symbol, _Period, SlowMA, 0, MODE_EMA, PRICE_CLOSE, 1);
+
+   // Check for Buy signal (Fast MA crosses above Slow MA)
+   if(maFastPrev < maSlowPrev && maFast > maSlow)
+   {
+      // Open Buy if no open Buy positions
+      if(!PositionExists(ORDER_TYPE_BUY))
+         OpenBuyOrder(LotSize, StopLossPips, TakeProfitPips);
+   }
+
+   // Check for Sell signal (Fast MA crosses below Slow MA)
+   if(maFastPrev > maSlowPrev && maFast < maSlow)
+   {
+      // Open Sell if no open Sell positions
+      if(!PositionExists(ORDER_TYPE_SELL))
+         OpenSellOrder(LotSize, StopLossPips, TakeProfitPips);
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Function to check if a position of given type exists             |
+//+------------------------------------------------------------------+
+bool PositionExists(int orderType)
+{
+   for(int i=0; i<PositionsTotal(); i++)
+   {
+      ulong ticket = PositionGetTicket(i);
+      if(PositionSelectByTicket(ticket))
+      {
+         if(PositionGetInteger(POSITION_TYPE) == orderType && PositionGetInteger(POSITION_MAGIC) == MagicNumber)
+            return(true);
+      }
+   }
+   return(false);
+}
+
+//+------------------------------------------------------------------+
+//| Function to open a Buy order                                     |
+//+------------------------------------------------------------------+
+void OpenBuyOrder(double lotSize, double stopLossPips, double takeProfitPips)
+{
+   double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+   double sl = ask - stopLossPips * _Point;
+   double tp = ask + takeProfitPips * _Point;
+
+   MqlTradeRequest request;
+   MqlTradeResult  result;
+   ZeroMemory(request);
+   ZeroMemory(result);
+
+   request.action    = TRADE_ACTION_DEAL;
+   request.symbol    = _Symbol;
+   request.volume    = lotSize;
+   request.type      = ORDER_TYPE_BUY;
+   request.price     = ask;
+   request.sl        = sl;
+   request.tp        = tp;
+   request.deviation = 10;
+   request.magic     = MagicNumber;
+   request.comment   = "Buy Order EA";
+
+   if(!OrderSend(request, result))
+      Print("Buy Order failed: ", GetLastError());
+   else
+      Print("Buy Order placed successfully. Ticket: ", result.order);
+}
+
+//+------------------------------------------------------------------+
+//| Function to open a Sell order                                    |
+//+------------------------------------------------------------------+
+void OpenSellOrder(double lotSize, double stopLossPips, double takeProfitPips)
+{
+   double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   double sl = bid + stopLossPips * _Point;
+   double tp = bid - takeProfitPips * _Point;
+
+   MqlTradeRequest request;
+   MqlTradeResult  result;
+   ZeroMemory(request);
+   ZeroMemory(result);
+
+   request.action    = TRADE_ACTION_DEAL;
+   request.symbol    = _Symbol;
+   request.volume    = lotSize;
+   request.type      = ORDER_TYPE_SELL;
+   request.price     = bid;
+   request.sl        = sl;
+   request.tp        = tp;
+   request.deviation = 10;
+   request.magic     = MagicNumber;
+   request.comment   = "Sell Order EA";
+
+   if(!OrderSend(request, result))
+      Print("Sell Order failed: ", GetLastError());
+   else
+      Print("Sell Order placed successfully. Ticket: ", result.order);
+}
