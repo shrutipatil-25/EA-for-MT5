@@ -1,0 +1,2 @@
+input double RiskPercent = 2.0;   // % of account balance to risk per trade
+input int    MagicNumber = 123456;
