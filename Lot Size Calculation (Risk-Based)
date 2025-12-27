@@ -1,0 +1,22 @@
+double CalculateLotSize(double stopLossPips)
+{
+   double balance    = AccountInfoDouble(ACCOUNT_BALANCE);
+   double riskMoney  = balance * RiskPercent / 100.0;
+
+   double tickValue  = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
+   double tickSize   = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+
+   double pipValuePerLot = (tickValue / tickSize) * _Point;
+   double lossPerLot     = stopLossPips * pipValuePerLot;
+
+   double lot = riskMoney / lossPerLot;
+
+   double minLot = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
+   double maxLot = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MAX);
+   double step   = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
+
+   lot = MathMax(minLot, MathMin(maxLot, lot));
+   lot = NormalizeDouble(lot / step, 0) * step;
+
+   return lot;
+}
